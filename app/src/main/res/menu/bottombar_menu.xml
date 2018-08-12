@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/bottombaritem_front"
+        android:title="Front"
+        android:icon="@drawable/front_icon"/>
+    <item
+        android:id="@+id/bottombaritem_fresh"
+        android:title="Fresh"
+        android:icon="@drawable/fresh_icon"/>
+    <item
+        android:id="@+id/bottombaritem_rising"
+        android:title="Rising"
+        android:icon="@drawable/rising_icon"/>
+</menu>

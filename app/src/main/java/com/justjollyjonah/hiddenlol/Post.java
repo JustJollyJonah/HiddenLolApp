@@ -18,8 +18,6 @@ public class Post {
         this.Id = id;
         this.Title = title;
         this.IsVideo = video;
-        if(!video) {
-            this.ImageUrl = bitmap;
-        }
+        this.ImageUrl = bitmap;
     }
 }

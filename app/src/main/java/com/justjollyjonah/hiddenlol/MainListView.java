@@ -1,12 +1,15 @@
 package com.justjollyjonah.hiddenlol;
 
+import android.app.FragmentTransaction;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.renderscript.ScriptGroup;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,92 +37,69 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainListView extends AppCompatActivity implements AsyncResponse {
+public class MainListView extends AppCompatActivity  {
 
-    private RecyclerView mRecyclerView;
-    private RecyclerView.Adapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private BottomNavigationView bottomNavigationView;
+    private List<HDLPostFragment> fragments = new ArrayList<>(3);
 
-    public Post[] Posts;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-
-        mRecyclerView = (RecyclerView) findViewById(R.id.postList);
-        mRecyclerView.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-        GetPosts posts = new GetPosts();
-        posts.delegate = this;
-        try {
-            URL url = new URL("http://www.hiddenlol.com");
-            posts.execute(url);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void processFinish(Post[] output) {
-        Posts = output;
-        mAdapter = new PostAdapter(Posts);
-        mRecyclerView.setAdapter(mAdapter);
-    }
-
-    private class GetPosts extends AsyncTask<URL, Void, Post[]> {
-
-        public AsyncResponse delegate = null;
-
-        @Override
-        protected Post[] doInBackground(URL... urls) {
-            ArrayList<Post> posts = new ArrayList<>();
-            try {
-                Document doc = Jsoup.connect(urls[0].toString()).get();
-                Elements elements = doc.getElementsByClass("post-container");
-                for (Element c: elements) {
-                    int postId = Integer.parseInt(c.attr("data-id"));
-                    boolean isVideo = false;
-                    String mediaUrl = "";
-                    Log.i("Post ID", String.valueOf(postId));
-                    Log.i("Post Title", c.getElementById("post-"+ String.valueOf(postId)).getElementsByClass("title").first().text());
-                    Element image =  doc.getElementById("post-image-" + String.valueOf(postId));
-                    if(image != null) {
-                        Log.i("Image source", image.attr("src"));
-                        mediaUrl = image.attr("src");
-                    } else {
-                        isVideo = true;
-                        mediaUrl = doc.getElementById("post-video-" + String.valueOf(postId)).getElementsByAttributeValue("type", "video/mp4").first().attr("src");
-                        Log.i("Video source", mediaUrl);
-                    }
-
-                    posts.add(new Post(
-                            postId,
-                            c.getElementById("post-"+ String.valueOf(postId)).getElementsByClass("title").first().text(),
-                            isVideo,
-                            mediaUrl
-                    ));
+        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.bottombaritem_front:
+                        switchFragment(0, "iets");
+                        Log.i("Switched List", "Front");
+                        break;
+                    case R.id.bottombaritem_fresh:
+                        switchFragment(1, "iets");
+                        Log.i("Switched List", "Fresh");
+                        break;
+                    case R.id.bottombaritem_rising:
+                        switchFragment(2, "iets");
+                        Log.i("Switched List", "Rising");
+                        break;
                 }
-            } catch (IOException e) {
-
+                return true;
             }
-            Post[] postArray = new Post[posts.size()];
-            return posts.toArray(postArray);
-        }
+        });
 
-        @Override
-        protected void onPostExecute(Post[] result) {
-            delegate.processFinish(result);
-        }
+        buildFragmentsList();
 
-        @Override
-        protected void onPreExecute() {}
+        switchFragment(0, "iets");
 
-        @Override
-        protected void onProgressUpdate(Void... somethhing) {}
+    }
+
+    private void buildFragmentsList() {
+        HDLPostFragment frontFragment = buildFragment(Page.Front);
+        HDLPostFragment freshFragment = buildFragment(Page.Fresh);
+        HDLPostFragment risingFragment = buildFragment(Page.Rising);
+
+        fragments.add(frontFragment);
+        fragments.add(freshFragment);
+        fragments.add(risingFragment);
+    }
+
+    private HDLPostFragment buildFragment(Page type) {
+        HDLPostFragment fragment = new HDLPostFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt("arg_type", type.ordinal());
+        fragment.setArguments(bundle);
+        return fragment;
+    }
+
+    private void switchFragment(int pos, String tag) {
+        android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in,android.R.anim.fade_out);
+        ft.replace(R.id.frame_fragmentholder, fragments.get(pos), tag);
+        ft.commit();
     }
 
     @Override
